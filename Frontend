@@ -1,0 +1,376 @@
+///run these in terminal
+// Create 2 components 
+// ng g c pledge-no 
+// ng g c submit
+//create 2 services to call urlconstants
+//ng g s pledge
+//ng g s submit
+
+
+
+//app.module.ts
+
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import {FormsModule} from '@angular/forms';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { PledgeNoComponent } from './pledge-no/pledge-no.component';
+import { SubmitComponent } from './submit/submit.component';
+import { HttpClientModule } from '@angular/common/http';
+
+@NgModule({
+  declarations: [
+    AppComponent, 
+    PledgeNoComponent,
+    SubmitComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+
+
+//app.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'ang1';
+}
+
+
+
+
+
+
+
+
+//app.component.html
+<router-outlet></router-outlet>
+
+
+
+
+
+
+
+//create file urlconstants.ts
+
+export class URLConstants {
+    public static SERVER = 'http://127.0.0.1:5000/';
+  
+    public static PLEDGE_DETAILS_API: string = URLConstants.SERVER.concat('getPledgeNos') ;
+    public static submit_API: string = URLConstants.SERVER.concat('pledgeNo') ;
+  
+   }
+
+
+
+
+
+
+
+//pledge service.ts
+
+import { Injectable } from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {URLConstants} from './URLConstants';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class PledgeService {
+
+  constructor(private http: HttpClient) { }
+
+  public getPledgeService(mobno: string) {
+
+    const postData = {
+      mobNo: mobno,
+    };
+    return this.http.get(URLConstants.PLEDGE_DETAILS_API + "?mobNo="+mobno);
+    // return this.http.post(`URLConstants.PLEDGE_DETAILS_API`, this.getPledgeService);
+  }
+}
+
+
+
+
+
+
+
+
+//pledge-no component.ts
+
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { PledgeService } from '../pledge.service';
+import {Router} from '@angular/router';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+
+
+@Component({
+  selector: 'app-pledge-no',
+  templateUrl: './pledge-no.component.html',
+  styleUrls: ['./pledge-no.component.css']
+})
+
+export class PledgeNoComponent {
+
+  PledgeNoData = [];
+  
+   clicked = false;
+   @ViewChild('f', {static: true}) pledgeForm: NgForm;
+   user = {
+    mobNo: '',
+    pledgeNo:'',
+
+
+    
+  };
+
+  constructor(private pledgeService: PledgeService,
+              private router: Router,
+              private httpClient: HttpClient,
+              private _Activatedroute:ActivatedRoute
+
+
+) { }
+
+  checkMobilenum(form: NgForm) {
+    console.log('Inside checkMobilenum');
+    this.clicked = true;
+    this.user = this.pledgeForm.form.value;
+    //  alert(this.user.mobNo)
+    // this._Activatedroute.snapshot.paramMap.get("mobno");
+ 
+      // this.router.navigate(['/submit']);
+  
+    this.pledgeService.getPledgeService(this.user.mobNo).subscribe((response) => {
+      console.log(response);
+      
+      this.PledgeNoData = (response['pledgelst']);
+     console.log(this.PledgeNoData)
+    //  alert(this.PledgeNoData)
+    //  this.router.navigate(['/submit']);
+     });
+
+  } 
+
+  checkPledgenum(pledgeNo) {
+    // console.log('Inside checkPledgenum');
+    
+    //  alert(pledgeNo)
+    // this._Activatedroute.snapshot.paramMap.get("mobno");
+ 
+      // this.router.navigate(['/submit']);
+  
+    // this.pledgeService.getPledgeService(pledgeNo).subscribe((response) => {
+      // console.log(response);
+      
+      // this.PledgeNoData = (response['d1']);
+    //  console.log(this.PledgeNoData)
+    //  alert(this.PledgeNoData)
+     this.router.navigate(['/submit']);
+    //  });
+
+  } 
+}
+
+
+
+
+
+
+
+
+//pledge-no.component.html
+
+<form (ngSubmit)="checkMobilenum(f)" #f="ngForm" novalidate>
+    <div class="input-group-prepend">
+        <span class="input-group-text"><i class="icon-user"></i></span>
+      </div>
+    <input type="text" ngModel="" name="mobNo" class="form-control" placeholder="Mobile Nubmer"
+       autocomplete="mobNo" autofocus="autofocus" required>
+    <button  class="btn btn-primary px-4" (click)="checkMobilenum(f)">Submit</button>
+    </form>
+    <div class="card-body" *ngIf="PledgeNoData">
+      <table class="table table-bordered table-striped table-sm">
+        <thead>
+        
+        <tr>
+          <!-- <th>#</th> -->
+          <th>pledgeNo</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor ="let pledge of PledgeNoData">
+          
+
+          <td>{{pledge.pledgeNo}} </td>
+        </tr>
+          
+
+          <tr> <button  class="btn btn-primary px-4" (click)="checkPledgenum(f)">Get Details Click Here</button>  </tr>
+       
+        </tbody>
+      </table>
+    </div>
+   
+
+
+
+
+
+
+
+//submit.service.ts
+
+import { Injectable } from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {URLConstants} from './URLConstants';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class SubmitService {
+
+  constructor(private http: HttpClient) { }
+
+  public getSubmitService(pledgeno: string) {
+
+    const postData = {
+      pledgeNo: pledgeno,
+    };
+    alert(URLConstants.submit_API)
+    return this.http.get(URLConstants.submit_API + "?pledgeNo="+pledgeno);
+    // return this.http.post(`URLConstants.PLEDGE_DETAILS_API`, this.getPledgeService);
+  }
+}
+
+
+
+
+
+//submit.component.ts
+
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import {Router} from '@angular/router';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { SubmitService } from '../submit.service';
+
+
+@Component({
+  selector: 'app-submit',
+  templateUrl: './submit.component.html',
+  styleUrls: ['./submit.component.css']
+})
+
+export class SubmitComponent {
+
+  PledgeNoData = [];
+  
+   clicked = false;
+   @ViewChild('f', {static: true}) pledgeForm: NgForm;
+   user = {
+    pledgeNo:'',
+
+
+    
+  };
+
+  
+  constructor(private submitService: SubmitService,
+              private router: Router,
+              private httpClient: HttpClient,
+              private _Activatedroute:ActivatedRoute
+
+
+
+              
+
+) { }
+
+
+  
+
+  checkPledgenum(form: NgForm) {
+    // console.log('Inside checkPledgeum');
+    this.clicked = true;
+    this.user = this.pledgeForm.form.value;
+    //  alert(this.user.pledgeNo)
+    // this._Activatedroute.snapshot.paramMap.get("mobno");
+ 
+      // this.router.navigate(['/submit']);
+  
+    this.submitService.getSubmitService(this.user.pledgeNo).subscribe((response) => {
+      // console.log(response);
+      
+      this.PledgeNoData = (response['lead']);
+
+     });
+
+  } 
+
+}
+
+
+
+
+
+//submit.component.html
+
+    <form (ngSubmit)="checkPledgenum(f)" #f="ngForm" novalidate>
+      <div class="input-group-prepend">
+          <span class="input-group-text"><i class="icon-user"></i></span>
+        </div>
+  
+      <input type="text" ngModel="" name="pledgeNo" class="form-control" placeholder="Pledge Nubmer"
+         autocomplete="pledgeNo" autofocus="autofocus" required>
+         <button  class="btn btn-primary px-4" (click)="checkPledgenum(f)">Submit</button>
+  
+      <div class="card-body" *ngIf="PledgeNoData">
+        <table class="table table-bordered table-striped table-sm">
+  
+          <thead>
+          
+          <tr>
+            <th>Pledge Details</th>
+  
+          </tr>
+        </thead>
+          <tbody>
+            <tr  *ngFor ="let pledge of PledgeNoData" >
+            
+              <td>AddLoan: {{pledge.addloan}}
+              <br>DueDate: {{pledge.duedt}}
+              <br>RenewalDate: {{pledge.renewaldt}}
+              <br>Totalstlmt: {{pledge.toatalstlmt}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </form>
+    
+    
+    
